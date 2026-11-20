@@ -1,0 +1,35 @@
+services:
+  opencode:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: opencode-mcp:latest
+    container_name: opencode
+    init: true
+    environment:
+      - TZ=${TZ:-UTC}
+      - SERVICE_PORT=4096
+      - SERVICE_HOSTNAME=0.0.0.0
+      # Same password protects the web UI and the MCP endpoint. Required.
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set it in .env}
+      - MCP_PORT=8123
+      - MCP_HOST=0.0.0.0
+      # Optional: default provider/model for the bridge's delegate_* tools.
+      - OPENCODE_DEFAULT_PROVIDER_ID=${OPENCODE_DEFAULT_PROVIDER_ID:-}
+      - OPENCODE_DEFAULT_MODEL_ID=${OPENCODE_DEFAULT_MODEL_ID:-}
+    ports:
+      - "4096:4096"   # opencode serve (web UI + API)
+      - "8123:8123"   # MCP over streamable-http at /mcp
+    volumes:
+      - ./workspace:/workspace
+      - opencode-share:/home/dev/.local/share/opencode
+      - opencode-config:/home/dev/.config/opencode
+      - opencode-state:/home/dev/.local/state/opencode
+    restart: unless-stopped
+
+volumes:
+  opencode-share:
+  opencode-config:
+  opencode-state:
