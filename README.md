@@ -108,22 +108,30 @@ docker compose up -d --build
 - **`httpx` must be installed explicitly** — the bridge imports it directly.
 - **Don't use `wait -n` here.** Compose runs the entrypoint with `/bin/sh` (dash), which
   lacks it; the poll loop in `entrypoint.sh` is the portable equivalent.
-- `docker compose up --build` also upgrades opencode itself (the installer pulls latest),
-  which can change the tool set the bridge exposes.
+- `docker compose up --build` does **not** upgrade opencode on its own (the installer layer is
+  cached) — use `make update`, see above.
 
-## Licenses & credits
+## Updating opencode
+
+Docker caches the layer that runs the official installer, so a plain
+`docker compose up --build` reuses the **old** CLI. Force it:
+
+```sh
+make update          # = docker compose build --build-arg OPENCODE_REFRESH=$(date +%s) && up -d
+make version         # what the container is actually running now
+```
+
+`OPENCODE_REFRESH` only busts that one layer, so the apt/pip layers stay cached and the
+rebuild is quick. If you also want a newer Debian base, add `--pull`.
+
+The bridge is unaffected by an opencode upgrade — but a new opencode can change the tool
+surface it exposes (78 → 69 between 2.0.19 and 2.3.2), so re-check your client's tool list
+after updating.
+
+## License
 
 This project is MIT — see [LICENSE](LICENSE).
 
-It stands on two other MIT projects, and neither is my work:
-
-| Project | License | Where it appears |
-|---|---|---|
-| [opencode](https://github.com/sst/opencode) | MIT | installed by the official installer at build time; its notice ships inside the image at `/opt/licenses/opencode-LICENSE` |
-| [opencode-mcp-bridge](https://github.com/gargomoma/opencode-mcp-bridge) | MIT | vendored under `mcp/opencode_mcp_bridge/`; notice in [LICENSE](LICENSE) |
-
-Redistributing the **image** means redistributing opencode, so its MIT notice is copied
-into `/opt/licenses/` rather than only linked from here. If you publish the image to a
-registry, that copy travels with it.
+[opencode](https://github.com/sst/opencode) — MIT.
 
 Issues and PRs: <https://github.com/gargomoma/opencode-mcp-docker/issues>

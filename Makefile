@@ -1,13 +1,20 @@
 IMAGE := opencode-mcp:latest
 COMPOSE := docker compose
 
-.PHONY: up build down logs sh test clean
+.PHONY: up build update version down logs sh test clean
 
 up:            ## build if needed and start
 	$(COMPOSE) up -d --build
 
-build:         ## rebuild the image only
+build:         ## rebuild the image only (cached layers)
 	$(COMPOSE) build
+
+update:        ## re-install the latest opencode CLI, then restart
+	$(COMPOSE) build --build-arg OPENCODE_REFRESH=$$(date +%s)
+	$(COMPOSE) up -d
+
+version:       ## which opencode is inside the running container
+	$(COMPOSE) exec opencode opencode --version
 
 down:          ## stop and remove the container
 	$(COMPOSE) down

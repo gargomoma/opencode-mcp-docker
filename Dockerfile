@@ -13,7 +13,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # opencode CLI, normalized to /usr/local/bin so PATH never depends on the installer.
-RUN curl -fsSL https://opencode.ai/v2/install | bash && \
+# OPENCODE_REFRESH forces this layer to re-run (Docker caches RUN forever otherwise):
+#   docker compose build --build-arg OPENCODE_REFRESH=$(date +%s)
+# `make update` does exactly that.
+ARG OPENCODE_REFRESH=0
+RUN echo "opencode install refresh: ${OPENCODE_REFRESH}" && \
+    curl -fsSL https://opencode.ai/v2/install | bash && \
     mv /root/.opencode/bin/opencode /usr/local/bin/opencode && \
     opencode --version
 
